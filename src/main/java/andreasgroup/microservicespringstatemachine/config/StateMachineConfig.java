@@ -12,6 +12,7 @@ import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineTransitionConfigurer;
+import org.springframework.statemachine.guard.Guard;
 import org.springframework.statemachine.listener.StateMachineListenerAdapter;
 import org.springframework.statemachine.state.State;
 
@@ -38,11 +39,13 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
 
     @Override
     public void configure(StateMachineTransitionConfigurer<PaymentState, PaymentEvent> transitions) throws Exception {
+        //We could have multiple actions and guards due to its versatility
         transitions
                 .withExternal().source(PaymentState.NEW)
                     .target(PaymentState.NEW)
                     .event(PaymentEvent.PRE_AUTHORIZE)
                     .action(preAuthAction())
+                    .guard(paymentIdGuard())
                 .and()
                 .withExternal().source(PaymentState.NEW)
                     .target(PaymentState.PRE_AUTH)
@@ -69,7 +72,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
 
         //High versatility because in actions we could send a message to a different system, call some type of web service
         // right out to the database. Just implement the business logic that we need.
-        
+
         // Here we simulate the authorization service either authorizing the transaction or declining the transaction.
         return context -> {
             System.out.println("PreAuth is called");
@@ -88,6 +91,14 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
                         .build());
             }//else
         };//context
+    }//Action
+
+
+    public Guard<PaymentState, PaymentEvent> paymentIdGuard(){
+        return context -> {
+            // return true of false which means it is a guard in order to ensure that we have a paymentId for Message Header
+            return context.getMessageHeader(PaymentServiceImpl.PAYMENT_ID_HEADER) != null;
+        };
     }
 
 
