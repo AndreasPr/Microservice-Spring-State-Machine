@@ -38,11 +38,13 @@ class PaymentServiceImplTest {
     @Test
     void preAuth() {
         Payment savedPayment = paymentService.newPayment(payment);
+        System.out.println("Should be NEW");
         System.out.println(savedPayment.getState());
 
         StateMachine<PaymentState, PaymentEvent> sm = paymentService.preAuth(savedPayment.getId());
         Payment preAuthedPayment = paymentRepository.getOne(savedPayment.getId());
 
+        System.out.println("Should be PRE_AUTH or PRE_AUTH_ERROR");
         System.out.println(sm.getState().getId());
         System.out.println(preAuthedPayment);
     }
